@@ -1,0 +1,9 @@
+train: ./dataset2/images/train
+val: ./dataset2/images/val
+test: ./dataset2/images/test
+
+# number of classes
+nc: 10
+
+# class names
+names:  ['3_yueyawan', '9_zhehen', '6_siban', '4_shuiban', '2_hanfeng', '7_yiwu', '5_youban', '8_yahen', '1_chongkong', '10_yaozhe']

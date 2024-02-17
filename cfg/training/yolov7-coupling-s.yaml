@@ -1,0 +1,125 @@
+# parameters
+nc: 80  # number of classes
+depth_multiple: 1.0  # model depth multiple
+width_multiple: 1.0  # layer channel multiple
+
+# anchors
+anchors: 3
+#  - [12,16, 19,36, 40,28]  # P3/8
+#  - [36,75, 76,55, 72,146]  # P4/16
+#  - [142,110, 192,243, 459,401]  # P5/32
+
+# yolov7 backbone
+backbone:
+  # [from, number, module, args]
+  [[-1, 1, Conv, [32, 3, 1]],  # 0
+
+   [-1, 1, Conv, [64, 3, 2]],  # 1-P1/2
+   [-1, 1, Conv, [64, 3, 1]],
+
+   [-1, 1, Conv, [128, 3, 2]],  # 3-P2/4
+   [-1, 1, Yolov7_E_ELAN_RR, [256, 64]], # 4
+
+   [-1, 1, V7DownSampling, [128]],  # 5-P3/8
+   [-1, 1, Yolov7_E_ELAN_RR, [512, 128]], # 6
+
+   [-1, 1, V7DownSampling, [256]],  # 7-P4/16
+   [-1, 1, Yolov7_E_ELAN_RR, [1024, 256]], # 8
+
+   [-1, 1, V7DownSampling, [512]],  # 9-P5/32
+   [-1, 1, Yolov7_E_ELAN_RR, [1024, 256]],  # 10
+  ]
+
+# yolov7 head
+head:
+  [[-1, 1, SPPCSPC, [512]], # 11
+
+   [-1, 1, Conv, [256, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#   [8, 1, fusion3, [256]], # 14 route backbone P4
+   [8, 1, Conv, [256, 1, 1]], # 14 route backbone P4
+   [[-1, -2], 1, Shortcut, [256]], # 15
+
+   [-1, 1, Conv, [512, 1, 1]],  #16+
+
+   [-1, 1, Yolov7_E_ELAN_NECK, [256, 128]], # 17
+
+   [-1, 1, Conv, [128, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, 'nearest']],
+#   [6, 1, fusion3, [128]], # 20 route backbone P3
+   [6, 1, Conv, [128, 1, 1]], # 20 route backbone P3
+   [[-1, -2], 1, Shortcut, [128]], # 21
+
+   [-1, 1, Conv, [256, 1, 1]],  #22+
+
+
+
+
+
+
+
+   [ -1, 1, Yolov7_E_ELAN_NECK, [ 128, 64 ] ], # 23
+
+   [ -1, 1, Conv, [ 64, 1, 1 ] ],  #24
+   [ -1, 1, nn.Upsample, [ None, 2, 'nearest' ] ],#25
+   [ 4, 1, Conv, [ 64, 1, 1 ] ], # 26 route backbone P1
+   [ [ -1, -2 ], 1, Shortcut, [ 64 ] ], # 27
+
+   [ -1, 1, Conv, [ 128, 1, 1 ] ],  #28+
+
+   [ -1, 1, Yolov7_E_ELAN_NECK, [ 64, 32 ] ], # 29
+
+   [ [ -1, 23 ], 1, V7DownSampling_Neck_shortcut, [ 64 ] ], # 30
+
+
+
+
+
+
+
+
+
+
+   [-1, 1, Yolov7_E_ELAN_NECK, [128, 64]], # 31
+
+   [[-1, 17], 1, V7DownSampling_Neck_shortcut, [128]], # 32
+
+   [-1, 1, Yolov7_E_ELAN_NECK, [256, 128]], # 33
+
+   [[-1, 11], 1, V7DownSampling_Neck_shortcut, [256]], # 34
+
+   [-1, 1, Yolov7_E_ELAN_NECK, [512, 256]], # 35
+
+
+#   [21, 1, RepConv, [256, 3, 1]], # 26-P3
+#   [23, 1, RepConv, [512, 3, 1]], # 27-P4
+#   [25, 1, RepConv, [1024, 3, 1]], # 28-P5
+#
+#   [[26, 27, 28], 1, IDetect, [nc, anchors]], ]  # Detect(P3, P4, P5)
+
+   [ [ 11, 35 ], 1, Shortcut, [ 512 ] ] , # 36
+   [ [ 14, 33 ], 1, Shortcut, [ 256 ] ],  # 37
+   [ [ 20, 31 ], 1, Shortcut, [ 128 ] ],  # 38
+   [ [ 26, 29 ], 1, Shortcut, [ 64 ] ] , # 39
+
+   [ 39, 1, RepConv, [ 128, 3, 1 ] ],  # 40-P2
+
+   [ 38, 1, RepConv, [ 256, 3, 1 ] ],  # 41-P3
+   [ 37, 1, RepConv, [ 512, 3, 1 ] ],  # 42-P4
+   [ 36, 1, RepConv, [ 1024, 3, 1 ] ],  # 43-P5
+
+
+
+
+   [ [ 40,41,42,43 ], 1, IDetect, [ nc, anchors ] ], ]  # Detect(P3, P4, P5)
+
+
+#   [ [ 19, 21 ], 1, Shortcut, [ 256 ] ],  # 26
+#   [ [ 14, 23 ], 1, Shortcut, [ 512 ] ],  # 27
+#   [ [ 11, 25 ], 1, Shortcut, [ 1024 ] ] , # 28
+#   [ 26, 1, RepConv, [ 256, 3, 1 ] ],  # 29-P3
+#   [ 27, 1, RepConv, [ 512, 3, 1 ] ],  # 30-P4
+#   [ 28, 1, RepConv, [ 1024, 3, 1 ] ],  # 31-P5
+
+#   [ [ 29, 30, 31 ], 1, IDetect, [ nc, anchors ] ], ]  # Detect(P3, P4, P5)
+
